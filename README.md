@@ -1,18 +1,21 @@
-# Direct GitHub 2-stock test
+# AUTO-SUBMIT VERSION
 
-This version has no Cloudflare Worker.
+Participants do NOT type a GitHub token.
 
-Upload:
+Files for GitHub Pages:
 - index.html
 - config.js
 
-to `tutut834834/forecasts`.
+Backend:
+- deploy worker.js as a Cloudflare Worker
+- add secrets:
+  GITHUB_TOKEN
+  GITHUB_OWNER=tutut834834
+  GITHUB_REPO=forecasts
+  ALLOWED_ORIGIN=https://tutut834834.github.io
 
-Open the GitHub Pages site. Paste your fine-grained GitHub token into the token box **in your own browser**, press Test GitHub, make 6 forecasts, then Submit forecasts.
+Then copy the Worker URL into config.js ONCE.
 
-The token is NOT embedded in these files and is NOT committed to GitHub.
-
-A successful submission creates:
-`forecast_<timestamp>_<anonymous-id>.txt`
-
-in the repository root.
+After that:
+visitor opens page -> makes 6 forecasts -> Submit -> txt appears in GitHub.
+No token field is shown to visitors.

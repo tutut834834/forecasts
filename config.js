@@ -1,5 +1,3 @@
 window.APP_CONFIG = {
-  GITHUB_OWNER: "tutut834834",
-  GITHUB_REPO: "forecasts",
-  GITHUB_BRANCH: "main"
+  WORKER_URL: "https://REPLACE-THIS-ONCE.workers.dev"
 };
