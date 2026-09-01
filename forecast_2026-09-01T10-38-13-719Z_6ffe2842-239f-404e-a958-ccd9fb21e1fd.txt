@@ -1,0 +1,41 @@
+Anonymous one-day forecast test
+submitted_at: 2026-09-01T10:38:13.719Z
+cutoff_date: 2026-08-31
+anonymous_id: 6ffe2842-239f-404e-a958-ccd9fb21e1fd
+number_of_forecasts: 6
+
+stock_id: s1
+history_window_days: 5
+last_known_date: 2026-08-31
+last_known_close: 139.00
+forecast_next_close: 139.36
+
+stock_id: s1
+history_window_days: 10
+last_known_date: 2026-08-31
+last_known_close: 139.00
+forecast_next_close: 138.38
+
+stock_id: s1
+history_window_days: 20
+last_known_date: 2026-08-31
+last_known_close: 139.00
+forecast_next_close: 146.02
+
+stock_id: s2
+history_window_days: 5
+last_known_date: 2026-08-31
+last_known_close: 92.20
+forecast_next_close: 92.15
+
+stock_id: s2
+history_window_days: 10
+last_known_date: 2026-08-31
+last_known_close: 92.20
+forecast_next_close: 85.61
+
+stock_id: s2
+history_window_days: 20
+last_known_date: 2026-08-31
+last_known_close: 92.20
+forecast_next_close: 95.01
