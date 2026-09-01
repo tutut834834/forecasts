@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Stock Forecast Challenge — MRK</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#07101e; --card:#0e1a2b; --card2:#122238; --text:#f3f7ff;
+      --muted:#9fb0c8; --accent:#70a5ff; --ok:#6ee7b7; --line:#273a55;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:radial-gradient(circle at top,#102542 0,#07101e 45%); color:var(--text);
+    }
+    .wrap { max-width:980px; margin:auto; padding:24px 14px 60px; }
+    header { margin:6px 4px 22px; }
+    h1 { margin:0 0 8px; font-size:clamp(28px,5vw,46px); }
+    .sub { color:var(--muted); line-height:1.5; }
+    .ticker {
+      display:inline-flex; gap:8px; align-items:center; margin-top:12px; padding:8px 12px;
+      background:#14243b; border:1px solid #274362; border-radius:999px; font-weight:700;
+    }
+    .card {
+      background:linear-gradient(180deg,var(--card2),var(--card));
+      border:1px solid #213754; border-radius:20px; padding:18px; margin:18px 0;
+      box-shadow:0 14px 35px rgba(0,0,0,.2);
+    }
+    .topline { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    h2 { margin:0; font-size:21px; }
+    .badge {
+      font-size:12px; color:#cfe0ff; border:1px solid #365b85; border-radius:999px; padding:5px 9px;
+    }
+    .hint { margin:8px 0 12px; color:var(--muted); font-size:14px; }
+    .canvas-wrap { position:relative; height:310px; touch-action:none; user-select:none; }
+    canvas { cursor:crosshair; }
+    .result {
+      margin-top:12px; padding:12px; background:#091523; border:1px solid #213754; border-radius:12px;
+      display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .value { font-weight:800; font-size:18px; }
+    button {
+      border:0; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer;
+      background:#d8e7ff; color:#07101e;
+    }
+    button.secondary { background:#172b46; color:#d9e8ff; border:1px solid #33557c; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    .locked { color:var(--ok); font-weight:800; }
+    footer { color:var(--muted); font-size:12px; text-align:center; margin-top:24px; }
+    @media (max-width:600px) { .canvas-wrap { height:270px; } .card{padding:14px} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Stock Forecast Challenge</h1>
+    <div class="sub">Look at the historical price chart. Touch or click the shaded forecast zone where you believe the stock will finish. Lock all three predictions.</div>
+    <div class="ticker">MRK · Merck KGaA · Xetra <span style="color:#9fb0c8">Last supplied close €139.00</span></div>
+  </header>
+
+  <div id="cards"></div>
+
+  <div class="card">
+    <div class="topline"><h2>Your forecast ticket</h2><span class="badge">stored on this device</span></div>
+    <div id="summary" class="hint">Make and lock your three forecasts.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="secondary" onclick="resetAll()">Reset game</button>
+      <button onclick="copyForecasts()">Copy forecasts</button>
+    </div>
+  </div>
+
+  <footer>Prototype for forecasting practice only — not investment advice. Historical values are embedded in this page.</footer>
+</div>
+
+<script>
+const historical = [{"date": "2026-04-13", "close": 113.0}, {"date": "2026-04-14", "close": 116.55}, {"date": "2026-04-15", "close": 117.15}, {"date": "2026-04-16", "close": 115.15}, {"date": "2026-04-17", "close": 118.5}, {"date": "2026-04-20", "close": 117.55}, {"date": "2026-04-21", "close": 117.5}, {"date": "2026-04-22", "close": 115.6}, {"date": "2026-04-23", "close": 112.05}, {"date": "2026-04-24", "close": 111.9}, {"date": "2026-04-27", "close": 109.15}, {"date": "2026-04-28", "close": 111.45}, {"date": "2026-04-29", "close": 108.2}, {"date": "2026-04-30", "close": 110.05}, {"date": "2026-05-04", "close": 109.4}, {"date": "2026-05-05", "close": 110.55}, {"date": "2026-05-06", "close": 113.7}, {"date": "2026-05-07", "close": 114.75}, {"date": "2026-05-08", "close": 112.85}, {"date": "2026-05-11", "close": 112.9}, {"date": "2026-05-12", "close": 113.0}, {"date": "2026-05-13", "close": 121.15}, {"date": "2026-05-14", "close": 120.75}, {"date": "2026-05-15", "close": 117.35}, {"date": "2026-05-18", "close": 117.75}, {"date": "2026-05-19", "close": 120.35}, {"date": "2026-05-20", "close": 122.75}, {"date": "2026-05-21", "close": 126.4}, {"date": "2026-05-22", "close": 128.6}, {"date": "2026-05-25", "close": 130.0}, {"date": "2026-05-26", "close": 128.35}, {"date": "2026-05-27", "close": 129.5}, {"date": "2026-05-28", "close": 129.95}, {"date": "2026-05-29", "close": 130.85}, {"date": "2026-06-01", "close": 130.85}, {"date": "2026-06-02", "close": 130.75}, {"date": "2026-06-03", "close": 133.5}, {"date": "2026-06-04", "close": 139.5}, {"date": "2026-06-05", "close": 136.85}, {"date": "2026-06-08", "close": 137.45}, {"date": "2026-06-09", "close": 138.15}, {"date": "2026-06-10", "close": 136.45}, {"date": "2026-06-11", "close": 135.4}, {"date": "2026-06-12", "close": 133.25}, {"date": "2026-06-15", "close": 132.7}, {"date": "2026-06-16", "close": 132.05}, {"date": "2026-06-17", "close": 133.4}, {"date": "2026-06-18", "close": 133.05}, {"date": "2026-06-19", "close": 132.9}, {"date": "2026-06-22", "close": 133.0}, {"date": "2026-06-23", "close": 135.0}, {"date": "2026-06-24", "close": 140.1}, {"date": "2026-06-25", "close": 147.0}, {"date": "2026-06-26", "close": 145.65}, {"date": "2026-06-29", "close": 146.4}, {"date": "2026-06-30", "close": 146.85}, {"date": "2026-07-01", "close": 144.5}, {"date": "2026-07-02", "close": 147.5}, {"date": "2026-07-03", "close": 145.65}, {"date": "2026-07-06", "close": 142.8}, {"date": "2026-07-07", "close": 141.75}, {"date": "2026-07-08", "close": 139.15}, {"date": "2026-07-09", "close": 139.6}, {"date": "2026-07-10", "close": 139.7}, {"date": "2026-07-13", "close": 139.85}, {"date": "2026-07-14", "close": 139.5}, {"date": "2026-07-15", "close": 140.1}, {"date": "2026-07-16", "close": 137.95}, {"date": "2026-07-17", "close": 136.3}, {"date": "2026-07-20", "close": 134.95}, {"date": "2026-07-21", "close": 134.25}, {"date": "2026-07-22", "close": 136.9}, {"date": "2026-07-23", "close": 139.25}, {"date": "2026-07-24", "close": 139.15}, {"date": "2026-07-27", "close": 141.75}, {"date": "2026-07-28", "close": 144.25}, {"date": "2026-07-29", "close": 145.1}, {"date": "2026-07-30", "close": 142.85}, {"date": "2026-07-31", "close": 143.15}, {"date": "2026-08-03", "close": 142.45}, {"date": "2026-08-04", "close": 146.35}, {"date": "2026-08-05", "close": 145.0}, {"date": "2026-08-06", "close": 145.15}, {"date": "2026-08-07", "close": 143.65}, {"date": "2026-08-10", "close": 143.5}, {"date": "2026-08-11", "close": 140.0}, {"date": "2026-08-12", "close": 140.0}, {"date": "2026-08-13", "close": 139.5}, {"date": "2026-08-14", "close": 136.3}, {"date": "2026-08-17", "close": 136.4}, {"date": "2026-08-18", "close": 136.75}, {"date": "2026-08-19", "close": 138.35}, {"date": "2026-08-20", "close": 138.05}, {"date": "2026-08-21", "close": 137.95}, {"date": "2026-08-24", "close": 138.4}, {"date": "2026-08-25", "close": 139.35}, {"date": "2026-08-26", "close": 138.65}, {"date": "2026-08-27", "close": 140.1}, {"date": "2026-08-28", "close": 140.25}, {"date": "2026-08-31", "close": 139.0}];
+
+const games = [
+  { id:"today", title:"1 · End of today", subtitle:"Where will MRK close at the end of today's Xetra session?", visible:22, futureLabel:"TODAY CLOSE" },
+  { id:"tomorrow", title:"2 · End of next trading day", subtitle:"Where will MRK close at the end of the next trading day?", visible:45, futureLabel:"NEXT DAY CLOSE" },
+  { id:"week", title:"3 · End of this week", subtitle:"Where will MRK close at the end of this week?", visible:100, futureLabel:"WEEK CLOSE" }
+];
+
+const state = JSON.parse(localStorage.getItem("forecast-state-v1") || "{}");
+const charts = {};
+
+function money(v) { return "€" + Number(v).toFixed(2); }
+function save() { localStorage.setItem("forecast-state-v1", JSON.stringify(state)); renderSummary(); }
+
+const forecastZonePlugin = {
+  id: "forecastZone",
+  beforeDraw(chart) {
+    const {ctx, chartArea, scales} = chart;
+    if (!chartArea) return;
+    const x = scales.x;
+    const lastIndex = chart.data.labels.length - 2;
+    const x1 = x.getPixelForValue(lastIndex + 0.5);
+    ctx.save();
+    ctx.fillStyle = "rgba(112,165,255,.09)";
+    ctx.fillRect(x1, chartArea.top, chartArea.right-x1, chartArea.bottom-chartArea.top);
+    ctx.strokeStyle = "rgba(112,165,255,.55)";
+    ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.moveTo(x1, chartArea.top); ctx.lineTo(x1, chartArea.bottom); ctx.stroke();
+    ctx.restore();
+  }
+};
+
+function cardHTML(g) {
+  return `<section class="card">
+    <div class="topline"><div><h2>${g.title}</h2><div class="hint">${g.subtitle}</div></div><span class="badge">tap forecast zone →</span></div>
+    <div class="canvas-wrap"><canvas id="chart-${g.id}"></canvas></div>
+    <div class="result">
+      <div id="read-${g.id}" class="value">No forecast selected</div>
+      <div style="display:flex;gap:8px">
+        <button class="secondary" id="clear-${g.id}" onclick="clearForecast('${g.id}')">Clear</button>
+        <button id="lock-${g.id}" onclick="lockForecast('${g.id}')">Lock forecast</button>
+      </div>
+    </div>
+  </section>`;
+}
+
+document.getElementById("cards").innerHTML = games.map(cardHTML).join("");
+
+function makeChart(g) {
+  const slice = historical.slice(-g.visible);
+  const labels = slice.map(x => x.date.slice(5).replace("-", "/"));
+  labels.push(g.futureLabel);
+
+  const actual = slice.map(x => x.close);
+  actual.push(null);
+
+  const pointData = new Array(labels.length).fill(null);
+  if (state[g.id]?.value != null) pointData[labels.length-1] = state[g.id].value;
+
+  const prices = slice.map(x=>x.close);
+  const min = Math.min(...prices), max = Math.max(...prices);
+  const pad = Math.max(4, (max-min)*0.35);
+
+  const chart = new Chart(document.getElementById("chart-"+g.id), {
+    type:"line",
+    plugins:[forecastZonePlugin],
+    data:{
+      labels,
+      datasets:[
+        {
+          label:"Historical close",
+          data:actual,
+          borderColor:"#70a5ff",
+          backgroundColor:"rgba(112,165,255,.12)",
+          borderWidth:2.5,
+          pointRadius:1.5,
+          pointHoverRadius:4,
+          tension:.18,
+          fill:false
+        },
+        {
+          label:"Your forecast",
+          data:pointData,
+          borderColor:"#6ee7b7",
+          backgroundColor:"#6ee7b7",
+          pointRadius:8,
+          pointHoverRadius:9,
+          showLine:false
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:"nearest",intersect:false},
+      scales:{
+        x:{grid:{color:"rgba(159,176,200,.08)"},ticks:{color:"#9fb0c8",maxTicksLimit:8}},
+        y:{suggestedMin:min-pad,suggestedMax:max+pad,grid:{color:"rgba(159,176,200,.08)"},ticks:{color:"#9fb0c8",callback:v=>"€"+v}}
+      },
+      plugins:{
+        legend:{labels:{color:"#cfe0ff",usePointStyle:true}},
+        tooltip:{callbacks:{label:(ctx)=>ctx.raw==null?"":ctx.dataset.label+": "+money(ctx.raw)}}
+      },
+      animation:false
+    }
+  });
+
+  const canvas = chart.canvas;
+  const choose = (clientX, clientY) => {
+    if (state[g.id]?.locked) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left, y = clientY - rect.top;
+    const lastIndex = chart.data.labels.length - 2;
+    const forecastBoundary = chart.scales.x.getPixelForValue(lastIndex + .35);
+    if (x < forecastBoundary) return;
+    const price = chart.scales.y.getValueForPixel(y);
+    if (!Number.isFinite(price)) return;
+    const rounded = Math.round(price*20)/20; // €0.05 increments
+    state[g.id] = {value:rounded, locked:false};
+    chart.data.datasets[1].data[chart.data.labels.length-1] = rounded;
+    chart.update();
+    updateCard(g.id);
+    save();
+  };
+
+  canvas.addEventListener("click", e => choose(e.clientX,e.clientY));
+  canvas.addEventListener("touchend", e => {
+    if (e.changedTouches[0]) {
+      e.preventDefault();
+      choose(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+    }
+  }, {passive:false});
+  charts[g.id]=chart;
+  updateCard(g.id);
+}
+
+function updateCard(id) {
+  const s=state[id];
+  const read=document.getElementById("read-"+id);
+  const lock=document.getElementById("lock-"+id);
+  const clear=document.getElementById("clear-"+id);
+  if (!s || s.value==null) {
+    read.textContent="No forecast selected";
+    read.className="value";
+    lock.disabled=true; clear.disabled=true;
+  } else {
+    read.innerHTML=(s.locked ? `<span class="locked">✓ LOCKED · ${money(s.value)}</span>` : `Selected: ${money(s.value)}`);
+    lock.disabled=!!s.locked; clear.disabled=!!s.locked;
+  }
+}
+
+function clearForecast(id) {
+  if (state[id]?.locked) return;
+  delete state[id];
+  const c=charts[id];
+  c.data.datasets[1].data[c.data.labels.length-1]=null; c.update();
+  updateCard(id); save();
+}
+function lockForecast(id) {
+  if (!state[id]?.value || state[id]?.locked) return;
+  state[id].locked=true; save(); updateCard(id);
+}
+function resetAll() {
+  if (!confirm("Reset all three forecasts?")) return;
+  localStorage.removeItem("forecast-state-v1");
+  location.reload();
+}
+function renderSummary() {
+  const lines=games.map(g=> {
+    const s=state[g.id];
+    return `${g.title.replace(/^\d · /,"")}: ${s?.value!=null?money(s.value):"—"} ${s?.locked?"✓":""}`;
+  });
+  document.getElementById("summary").innerHTML=lines.join("<br>");
+}
+async function copyForecasts() {
+  const text = games.map(g=>`${g.title.replace(/^\d · /,"")}: ${state[g.id]?.value!=null?money(state[g.id].value):"—"}`).join("\n");
+  try { await navigator.clipboard.writeText(text); alert("Forecasts copied."); }
+  catch { prompt("Copy your forecasts:", text); }
+}
+
+games.forEach(makeChart);
+renderSummary();
+</script>
+</body>
+</html>
